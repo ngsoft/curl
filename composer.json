@@ -1,0 +1,30 @@
+{
+    "name": "ngsoft/curl",
+    "description": "A wrapper around PHP Curl",
+    "keywords": ["curl", "client", "http"],
+    "license": "MIT",
+    "authors": [{
+            "name": "Aymeric Anger",
+            "role": "Developer",
+            "homepage": "https://github.com/ngsoft"
+        }],
+    "require-dev": {
+        "nyholm/psr7": "*",
+        "psr/container": "*"
+    },
+    "require": {
+        "php": ">=7.1",
+        "ext-curl": "*",
+        "psr/http-client": "*",
+        "psr/http-factory": "^1.0",
+        "fig/http-message-util": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "NGSOFT\\Curl\\": "src/"
+        },
+        "files": []
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
