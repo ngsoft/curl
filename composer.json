@@ -1,7 +1,7 @@
 {
     "name": "ngsoft/curl",
     "description": "A wrapper around PHP Curl",
-    "keywords": ["curl", "client", "http"],
+    "keywords": ["curl", "client", "http", "http-client", "psr7", "psr17", "psr18"],
     "license": "MIT",
     "authors": [{
             "name": "Aymeric Anger",
@@ -18,6 +18,10 @@
         "psr/http-client": "*",
         "psr/http-factory": "^1.0",
         "fig/http-message-util": "*"
+    },
+    "provide": {
+        "psr/http-client-implementation": "1.0",
+        "psr/http-factory-implementation": "1.0"
     },
     "autoload": {
         "psr-4": {
