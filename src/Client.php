@@ -10,11 +10,11 @@ use Psr\{
 };
 use RuntimeException;
 
-if (!class_exists(MessageInterface)) {
+if (!class_exists(MessageInterface::class)) {
     throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-7 implementation. see https://packagist.org/providers/psr/http-message-implementation");
 }
 
-if (!class_exists(RequestFactoryInterface)) {
+if (!class_exists(RequestFactoryInterface::class)) {
     throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-17 implementation. see https://packagist.org/providers/psr/http-factory-implementation");
 }
 

@@ -12,7 +12,8 @@
     "require-dev": {
         "nyholm/psr7": "*",
         "psr/http-factory": "^1.0",
-        "psr/container": "*"
+        "psr/container": "*",
+        "psr/log": "*"
     },
     "require": {
         "php": ">=7.1",
