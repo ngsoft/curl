@@ -52,6 +52,9 @@ final class Client implements RequestFactoryInterface, ResponseFactoryInterface,
      */
     private $urifactory;
 
+    /** @var LoggerInterface */
+    private $logger;
+
     /**
      * Get a clone from the current instance
      * @return static

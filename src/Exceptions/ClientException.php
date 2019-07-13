@@ -2,8 +2,10 @@
 
 namespace NGSOFT\Curl\Exceptions;
 
-use Psr\Http\Message\RequestInterface,
-    RuntimeException,
+use Psr\{
+    Http\Message\RequestInterface, Log\LoggerInterface
+};
+use RuntimeException,
     Throwable;
 
 abstract class ClientException extends RuntimeException {
@@ -29,6 +31,14 @@ abstract class ClientException extends RuntimeException {
      */
     public function getRequest(): RequestInterface {
         return $this->request;
+    }
+
+    /**
+     * Logs the error to the logger
+     * @param LoggerInterface $logger
+     */
+    public function logMessage(LoggerInterface $logger, string $message) {
+        $logger->error($message);
     }
 
 }
