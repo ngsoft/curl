@@ -4,11 +4,15 @@ namespace NGSOFT\Curl;
 
 use InvalidArgumentException;
 use Psr\{
-    Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\RequestFactoryInterface, Http\Message\RequestInterface,
-    Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface, Http\Message\StreamFactoryInterface,
-    Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
+    Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\MessageInterface, Http\Message\RequestFactoryInterface,
+    Http\Message\RequestInterface, Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface,
+    Http\Message\StreamFactoryInterface, Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
 };
 use RuntimeException;
+
+if (!class_exists(MessageInterface)) {
+    throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-7 implementation. see https://packagist.org/providers/psr/http-message-implementation");
+}
 
 /**
  * This is a PSR 17 Proxy for PSR 17 implementations

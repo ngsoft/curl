@@ -8,10 +8,12 @@
             "role": "Developer",
             "homepage": "https://github.com/ngsoft"
         }],
+
     "require-dev": {
         "nyholm/psr7": "*",
         "psr/container": "*"
     },
+
     "require": {
         "php": ">=7.1",
         "ext-curl": "*",
@@ -19,9 +21,13 @@
         "psr/http-factory": "^1.0",
         "fig/http-message-util": "*"
     },
+
     "provide": {
-        "psr/http-client-implementation": "1.0",
-        "psr/http-factory-implementation": "1.0"
+        "psr/http-client-implementation": "1.0"
+    },
+
+    "suggest": {
+        "psr/http-message-implementation": "A PSR-7 implementation to build your requests."
     },
     "autoload": {
         "psr-4": {
