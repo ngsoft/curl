@@ -1,21 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NGSOFT\Curl;
 
 use InvalidArgumentException;
 use Psr\{
-    Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\MessageInterface, Http\Message\RequestFactoryInterface,
-    Http\Message\RequestInterface, Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface,
-    Http\Message\StreamFactoryInterface, Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
+    Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\RequestFactoryInterface, Http\Message\RequestInterface,
+    Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface, Http\Message\StreamFactoryInterface,
+    Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
 };
 use RuntimeException;
 
-if (!class_exists(MessageInterface::class)) {
-    throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-7 implementation. see https://packagist.org/providers/psr/http-message-implementation");
-}
-
 if (!class_exists(RequestFactoryInterface::class)) {
-    throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-17 implementation. see https://packagist.org/providers/psr/http-factory-implementation");
+    throw new RuntimeException("Cannot use the HTTP Client, you do not provide a PSR-17 implementation. see https://packagist.org/providers/psr/http-factory-implementation");
 }
 
 /**
