@@ -14,6 +14,10 @@ if (!class_exists(MessageInterface)) {
     throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-7 implementation. see https://packagist.org/providers/psr/http-message-implementation");
 }
 
+if (!class_exists(RequestFactoryInterface)) {
+    throw new RuntimeException("Cannot use the HTTP Client, you do not use a PSR-17 implementation. see https://packagist.org/providers/psr/http-factory-implementation");
+}
+
 /**
  * This is a PSR 17 Proxy for PSR 17 implementations
  * And also a PSR 18 Implementation
