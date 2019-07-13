@@ -45,11 +45,40 @@ class RequestBuilder {
      * @throws InvalidArgumentException
      */
     public static function setCertlocation(string $certlocation) {
-        if (!file_exists($certlocation)) @mkdir($certlocation, 0777, true);
+        file_exists($certlocation) || @mkdir($certlocation, 0777, true);
         if (!is_dir($certlocation) or ! is_writable($certlocation)) {
-            throw new InvalidArgumentException("$certlocation is not an existing directory or is not writable.");
+            throw new RuntimeException("$certlocation is not an existing directory or is not writable.");
         }
-        self::$certlocation = $certlocation;
+        self::$certlocation = $certlocation . DIRECTORY_SEPARATOR . basename(self::CACERT_SRC);
+    }
+
+    /**
+     * Downloads Certifications from haxx (if not already present)
+     * @staticvar string $path
+     * @return string|null
+     */
+    private function getCACert() {
+        static $path = null;
+        if ($path === null and self::$cacertLocation !== null) {
+            $file = self::$cacertLocation;
+            if (!is_file($file) and is_dir(dirname($file))) {
+                $ch = curl_init();
+                $this->curl_setopt_array($ch, self::CURL_DEFAULTS);
+                $this->curl_setopt_array($ch, [
+                    CURLOPT_URL => self::CACERT_SRC,
+                    CURLOPT_SSL_VERIFYPEER => false
+                ]);
+                $contents = curl_exec($ch);
+                $err = curl_errno($ch);
+                curl_close($ch);
+                if (!$err and ! empty($contents)) {
+                    if (@file_put_contents($file, $contents, LOCK_EX)) @chmod($file, 0777);
+                    else @unlink($file);
+                } else return null;
+            }
+            $path = realpath($file);
+        }
+        return $path;
     }
 
     /**
@@ -70,6 +99,18 @@ class RequestBuilder {
      */
     private function isValidUrl(string $url): bool {
         return preg_match(CurlHelper::VALID_URL_REGEX, $url) > 0;
+    }
+
+    /**
+     * Encode key value pairs to a valid curl input
+     * @return array
+     */
+    private function makeHeaders(): array {
+        $lines = [];
+        foreach ($this->headers as $k => $v) {
+            $lines[] = sprintf('%s: %s', $k, $v);
+        }
+        return $lines;
     }
 
     /** @return static */
@@ -154,7 +195,7 @@ class RequestBuilder {
 
     /**
      * Add a single header to the stack
-     * @param string $key
+     * @param string $name
      * @param string $value
      * @return static
      */
@@ -283,6 +324,12 @@ class RequestBuilder {
                     CURLOPT_CONNECTTIMEOUT => $timeout,
                     CURLOPT_TIMEOUT => $timeout
         ]);
+    }
+
+    ////////////////////////////   FETCH   ////////////////////////////
+
+    public function fetch(string $url): CurlResponse {
+
     }
 
 }

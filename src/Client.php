@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use Psr\{
     Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\RequestFactoryInterface, Http\Message\RequestInterface,
     Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface, Http\Message\StreamFactoryInterface,
-    Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
+    Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface, Log\LoggerInterface
 };
 use RuntimeException;
 
@@ -97,7 +97,7 @@ final class Client implements RequestFactoryInterface, ResponseFactoryInterface,
 
     /**
      * Add The PSR{7/11} Implementations instances
-     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface ...$options
+     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface|LoggerInterface ...$options
      * @return static
      */
     public function configure(...$options) {
@@ -117,6 +117,8 @@ final class Client implements RequestFactoryInterface, ResponseFactoryInterface,
                     }
                 }
                 continue;
+            } elseif ($option instanceof LoggerInterface) {
+                $this->logger = $option;
             }
 
             // Auto detects the PSR7 Implementation classes from the arguments
@@ -140,7 +142,7 @@ final class Client implements RequestFactoryInterface, ResponseFactoryInterface,
     }
 
     /**
-     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface ...$options
+     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface|LoggerInterface ...$options
      * @throws InvalidArgumentException
      */
     public function __construct(...$options) {
@@ -148,7 +150,7 @@ final class Client implements RequestFactoryInterface, ResponseFactoryInterface,
     }
 
     /**
-     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface ...$options
+     * @param RequestFactoryInterface|ResponseFactoryInterface|StreamFactoryInterface|UriFactoryInterface|ContainerInterface|LoggerInterface ...$options
      * @throws InvalidArgumentException
      */
     public static function create(...$options): self {
