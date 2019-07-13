@@ -4,7 +4,7 @@ namespace NGSOFT\Curl;
 
 use InvalidArgumentException;
 use Psr\{
-    Container\ContainerInterface, Http\Message\RequestFactoryInterface, Http\Message\RequestInterface,
+    Container\ContainerInterface, Http\Client\ClientInterface, Http\Message\RequestFactoryInterface, Http\Message\RequestInterface,
     Http\Message\ResponseFactoryInterface, Http\Message\ResponseInterface, Http\Message\StreamFactoryInterface,
     Http\Message\StreamInterface, Http\Message\UriFactoryInterface, Http\Message\UriInterface
 };
@@ -12,8 +12,9 @@ use RuntimeException;
 
 /**
  * This is a PSR 17 Proxy for PSR 17 implementations
+ * And also a PSR 18 Implementation
  */
-class Factory implements RequestFactoryInterface, ResponseFactoryInterface, StreamFactoryInterface, UriFactoryInterface {
+class Factory implements RequestFactoryInterface, ResponseFactoryInterface, StreamFactoryInterface, UriFactoryInterface, ClientInterface {
     ////////////////////////////   Instanciation and Configuration   ////////////////////////////
 
     /** @var array<string,string> */
@@ -236,6 +237,13 @@ class Factory implements RequestFactoryInterface, ResponseFactoryInterface, Stre
     /** {@inheritdoc} */
     public function createUri(string $uri = ''): UriInterface {
         return $this->assertConfigured()->urifactory->createUri($uri);
+    }
+
+    ////////////////////////////   PSR18   ////////////////////////////
+
+    /** {@inheritdoc} */
+    public function sendRequest(RequestInterface $request): ResponseInterface {
+
     }
 
 }
