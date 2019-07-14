@@ -22,6 +22,8 @@ if (!interface_exists(ResponseFactoryInterface::class)) {
  */
 final class Client implements ClientInterface {
 
+    const VERSION = CurlRequest::VERSION;
+
     /** @var ResponseFactoryInterface */
     private $responsefactory;
 
