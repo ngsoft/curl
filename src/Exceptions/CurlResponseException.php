@@ -27,12 +27,4 @@ class CurlResponseException extends CurlException {
         return $this->response;
     }
 
-    /**
-     * Logs the error to the logger
-     * @param LoggerInterface|null $logger
-     */
-    public function logMessage(LoggerInterface $logger = null) {
-        if ($logger !== null) $logger->error($this->getMessage());
-    }
-
 }
