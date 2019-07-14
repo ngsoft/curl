@@ -1,7 +1,7 @@
 {
     "name": "ngsoft/curl",
     "description": "A wrapper around PHP Curl",
-    "keywords": ["curl", "client", "http", "http-client", "psr7", "psr17", "psr18"],
+    "keywords": ["curl", "client", "http", "http-client"],
     "license": "MIT",
     "authors": [{
             "name": "Aymeric Anger",
