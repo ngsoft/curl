@@ -2,8 +2,7 @@
 
 namespace NGSOFT\Curl\Exceptions;
 
-use Psr\Log\LoggerInterface,
-    RuntimeException;
+use RuntimeException;
 
 class CurlException extends RuntimeException {
 
@@ -12,5 +11,6 @@ class CurlException extends RuntimeException {
      */
     const CODE_PARSINGREQUEST = 0;
     const CODE_INVALIDOPT = 8;
+    const CODE_METADATA = 16;
 
 }

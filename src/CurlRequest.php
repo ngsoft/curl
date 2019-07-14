@@ -28,7 +28,7 @@ class CurlRequest {
     /** @var string|null */
     private static $cacertLocation;
 
-    /** @var array<string,string> */
+    /** @var array<string,string[]> */
     private $headers = [];
 
     /** @var int */
@@ -52,7 +52,7 @@ class CurlRequest {
         if (!is_dir($certlocation) or ! is_writable($certlocation)) {
             throw new RuntimeException("$certlocation is not an existing directory or is not writable.");
         }
-        self::$certlocation = $certlocation . DIRECTORY_SEPARATOR . basename(self::CACERT_SRC);
+        self::$cacertLocation = $certlocation . DIRECTORY_SEPARATOR . basename(self::CACERT_SRC);
     }
 
     /**
@@ -126,7 +126,7 @@ class CurlRequest {
 
     /**
      * Encode key value pairs to a valid curl input
-     * @return array
+     * @return array<string>
      */
     private function makeHeaders(): array {
         $lines = [];
@@ -192,7 +192,7 @@ class CurlRequest {
 
     /**
      * Set multiple headers (overwrites the headers)
-     * @param array<string,string> $headers
+     * @param array<string,string|string[]> $headers
      * @return static
      */
     public function withHeaders(array $headers): self {
@@ -210,7 +210,7 @@ class CurlRequest {
 
     /**
      * Adds multiple headers to the stack
-     * @param array<string,string> $headers
+     * @param array<string,string|string[]> $headers
      * @return static
      */
     public function withAddedHeaders(array $headers): self {
@@ -372,7 +372,7 @@ class CurlRequest {
     /**
      * Execute the CURL Request
      * @param string $url
-     * @param string $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
+     * @param string|null $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
      * @param null|string|array<string,mixed> $data
      * @return CurlResponse
      */
@@ -419,7 +419,7 @@ class CurlRequest {
         $ca = [CURLOPT_SSL_VERIFYPEER => false];
         if ($cert = $this->getCACert()) {
             $ca = [
-                CURLOPT_CAINFO => $ca,
+                CURLOPT_CAINFO => $cert,
                 CURLOPT_SSL_VERIFYPEER => true
             ];
         }
@@ -430,11 +430,11 @@ class CurlRequest {
 
     /**
      * Execute CURL Request
-     * @param type $ch
-     * @param string $url
+     * @param resource $ch
      * @return array<string,mixed>
      */
     private function execCurl($ch): array {
+        assert(is_resource($ch));
 
         $this->curl_setopt($ch, CURLINFO_HEADER_OUT, true); // to parse request headers
 
@@ -450,11 +450,12 @@ class CurlRequest {
             $fullheader .= $header;
             $len = strlen($header);
             $line = trim($header);
+            $matches = [];
             if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                 list(, $name, $value) = $matches;
                 $value = trim($value);
                 $headers[$name][] = $value;
-            } elseif (!empty($line) and preg_match('/^[A-Z]+\/([0-9](?:\.[0-9])?)\h+([0-9]{3})/i', $line, $matches)) {
+            } elseif (!empty($line) and preg_match('/[A-Z]+\/([0-9](?:\.[0-9])?)\h+([0-9]{3})/i', $line, $matches)) {
                 list(, $version, $status) = $matches;
                 $status = intval($status);
                 $version = strlen($version) > 1 ? $version : "$version.0";
@@ -475,6 +476,7 @@ class CurlRequest {
         // Parse Request Headers
         $rheaders = [];
         if (($hout = curl_getinfo($ch, CURLINFO_HEADER_OUT))) {
+            $matches = [];
             foreach (explode("\n", $hout) as $line) {
                 $line = trim($line);
                 if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {

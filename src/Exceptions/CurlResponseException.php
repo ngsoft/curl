@@ -7,9 +7,8 @@ use NGSOFT\Curl\CurlResponse,
 
 class CurlResponseException extends CurlException {
 
-    const CODE_CURLERROR = 16;
-    const CODE_INVALIDSTREAM = 32;
-    const CODE_METADATA = 64;
+    const CODE_CURLERROR = 32;
+    const CODE_INVALIDSTREAM = 64;
 
     /** @var CURLInfos */
     private $response;
@@ -32,8 +31,8 @@ class CurlResponseException extends CurlException {
      * Logs the error to the logger
      * @param LoggerInterface|null $logger
      */
-    public function logMessage(LoggerInterface $logger = null, string $message) {
-        if ($logger !== null) $logger->error($message);
+    public function logMessage(LoggerInterface $logger = null) {
+        if ($logger !== null) $logger->error($this->getMessage());
     }
 
 }

@@ -71,7 +71,7 @@ final class Client implements ClientInterface {
      * Use CurlRequest to build the request to obtain a PSR7 Response
      * @param CurlRequest $request
      * @param string $url
-     * @param string $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
+     * @param string|null $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
      * @param null|string|array<string,mixed> $data
      * @return ResponseInterface
      */

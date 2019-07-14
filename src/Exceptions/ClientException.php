@@ -14,6 +14,12 @@ abstract class ClientException extends RuntimeException {
 
     private $request;
 
+    /**
+     * @param RequestInterface $request
+     * @param string $message
+     * @param int $code
+     * @param Throwable|null $previous
+     */
     public function __construct(
             RequestInterface $request,
             string $message = "",
@@ -39,8 +45,8 @@ abstract class ClientException extends RuntimeException {
      * Logs the error to the logger
      * @param LoggerInterface|null $logger
      */
-    public function logMessage(LoggerInterface $logger = null, string $message) {
-        if ($logger !== null) $logger->error($message);
+    public function logMessage(LoggerInterface $logger = null) {
+        if ($logger !== null) $logger->error($this->getMessage());
     }
 
 }

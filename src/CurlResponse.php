@@ -55,7 +55,7 @@ class CurlResponse implements ArrayAccess, Countable {
     "curl_exec", "curl_error", "curl_errno", "curl_info", "body",
         ] as $key) {
             if (!array_key_exists($key, $metadatas)) {
-                throw new CurlResponseException($this, "Invalid Metadata Provided.", CurlResponseException::CODE_METADATA);
+                throw new CurlException("Invalid Metadata Provided.", CurlException::CODE_METADATA);
             }
         }
     }
@@ -85,7 +85,6 @@ class CurlResponse implements ArrayAccess, Countable {
     public function __get($name) {
         if (isset($this->{$name})) return $this->storage[$name];
         elseif ($name === "contents") return $this->getContents();
-        elseif ($name = "redirect_url") return "";
         throw new RuntimeException("Invalid property $name");
     }
 
@@ -94,12 +93,18 @@ class CurlResponse implements ArrayAccess, Countable {
         return array_key_exists($name, $this->storage);
     }
 
-    /** {@inheritdoc} */
+    /**
+     * {@inheritdoc}
+     * @phan-suppress PhanParamTooMany
+     */
     public function __set($name, $value) {
         $this->noop($name, $value);
     }
 
-    /** {@inheritdoc} */
+    /**
+     * {@inheritdoc}
+     * @phan-suppress PhanParamTooMany
+     */
     public function __unset($name) {
         $this->noop($name);
     }
@@ -131,12 +136,12 @@ class CurlResponse implements ArrayAccess, Countable {
 
     /** {@inheritdoc} */
     public function offsetSet($offset, $value) {
-        $this->noop($offset, $value);
+        $this->__set($offset, $value);
     }
 
     /** {@inheritdoc} */
     public function offsetUnset($offset) {
-        $this->noop($offset);
+        $this->__unset($offset);
     }
 
     /** {@inheritdoc} */
