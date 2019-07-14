@@ -130,8 +130,10 @@ class CurlRequest {
      */
     private function makeHeaders(): array {
         $lines = [];
-        foreach ($this->headers as $k => $v) {
-            $lines[] = sprintf('%s: %s', $k, $v);
+        foreach ($this->headers as $name => $v) {
+            foreach ($v as $val) {
+                $lines[] = sprintf('%s: %s', $name, $val);
+            }
         }
         return $lines;
     }
@@ -158,7 +160,7 @@ class CurlRequest {
      * @return static
      */
     private function setHeader(string $key, string $value): self {
-        $this->headers[$key] = $value;
+        $this->headers[$key][] = $value;
         return $this;
     }
 
@@ -198,7 +200,10 @@ class CurlRequest {
         $clone->headers = [];
         // Type Check
         foreach ($headers as $k => $v) {
-            $clone->setHeader($k, $v);
+            if (!is_array($v)) $v = [$v];
+            foreach ($v as $val) {
+                $clone->setHeader($k, $val);
+            }
         }
         return $clone;
     }
@@ -211,7 +216,10 @@ class CurlRequest {
     public function withAddedHeaders(array $headers): self {
         $clone = $this->getClone();
         foreach ($headers as $k => $v) {
-            $clone->setHeader($k, $v);
+            if (!is_array($v)) $v = [$v];
+            foreach ($v as $val) {
+                $clone->setHeader($k, $val);
+            }
         }
         return $clone;
     }
@@ -444,6 +452,7 @@ class CurlRequest {
             $line = trim($header);
             if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                 list(, $name, $value) = $matches;
+                $value = trim($value);
                 $headers[$name][] = $value;
             } elseif (!empty($line) and preg_match('/^[A-Z]+\/([0-9](?:\.[0-9])?)\h+([0-9]{3})/i', $line, $matches)) {
                 list(, $version, $status) = $matches;
@@ -488,7 +497,6 @@ class CurlRequest {
             "headers" => $headers,
             "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
             "request_headers" => $rheaders,
-            //"http_reason_phrase" => $phrase,
             "curl_exec" => $success,
             "curl_error" => $err,
             "curl_errno" => $errno,
