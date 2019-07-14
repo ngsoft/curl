@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use NGSOFT\Curl\{
     Exceptions\CurlException, Interfaces\Curl
 };
-use UI\Exception\RuntimeException;
+use RuntimeException;
 
 class RequestBuilder {
 
@@ -393,7 +393,7 @@ class RequestBuilder {
         $this->curl_setopt($ch, CURLOPT_URL, $url);
         if (isset($parsedmethod)) $this->curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $parsedmethod);
         if (isset($data)) $this->curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        return new CurlResponse($this->execCurl($ch));
+        return CurlResponse::create($this->execCurl($ch));
     }
 
     /**
