@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace NGSOFT\Curl\Exceptions;
 
-use Psr\{
-    Http\Message\RequestInterface, Log\LoggerInterface
-};
-use RuntimeException,
+use Psr\Http\Message\RequestInterface,
+    RuntimeException,
     Throwable;
 
 abstract class ClientException extends RuntimeException {
