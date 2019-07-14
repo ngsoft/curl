@@ -331,7 +331,7 @@ class CurlRequest {
      * @param string $userAgent
      * @return static
      */
-    public function withUserAgent(string $userAgent) {
+    public function withUserAgent(string $userAgent = self::USER_AGENT) {
         return $this->withOpt(CURLOPT_USERAGENT, $userAgent);
     }
 
