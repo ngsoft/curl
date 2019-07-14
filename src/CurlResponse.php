@@ -67,7 +67,7 @@ class CurlResponse implements ArrayAccess, Countable {
      */
     private function getContents(): string {
         if (-1 === fseek($this->body, 0)) {
-            throw new CurlException("Cannot seek stream.", CurlException::CODE_INVALIDSTREAM);
+            throw new CurlResponseException($this, "Cannot seek stream.", CurlResponseException::CODE_INVALIDSTREAM);
         }
         return stream_get_contents($this->body);
     }

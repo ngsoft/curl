@@ -7,8 +7,9 @@ use NGSOFT\Curl\CurlResponse,
 
 class CurlResponseException extends CurlException {
 
+    const CODE_CURLERROR = 16;
+    const CODE_INVALIDSTREAM = 32;
     const CODE_METADATA = 64;
-    const CODE_CURL_ERROR = 128;
 
     /** @var CURLInfos */
     private $response;
