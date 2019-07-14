@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace NGSOFT\Curl;
 
-use NGSOFT\Curl\Interfaces\CurlHelper;
+use InvalidArgumentException,
+    NGSOFT\Curl\Interfaces\CurlHelper,
+    UI\Exception\RuntimeException;
 
 class RequestBuilder {
 
@@ -329,7 +331,17 @@ class RequestBuilder {
 
     ////////////////////////////   FETCH   ////////////////////////////
 
-    public function fetch(string $url, string $method = null): CurlResponse {
+    /**
+     * Execute the CURL Request
+     * @param string $url
+     * @param string $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
+     * @param null|string|array<string,mixed> $data
+     * @return CurlResponse
+     */
+    public function fetch(string $url, string $method = null, $data = null): CurlResponse {
+
+        $ch = $this->initCurl();
+
 
 
 
