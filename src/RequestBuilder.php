@@ -368,9 +368,7 @@ class RequestBuilder {
      * @param null|string|array<string,mixed> $data
      * @return CurlResponse
      */
-    public function fetch(string $url, string $method = null, $data = null): CurlResponse {
-
-
+    public function fetch(string $url, string $method = null, $data = null): CurlInfos {
         /**
          * Assertions
          */
@@ -393,7 +391,7 @@ class RequestBuilder {
         $this->curl_setopt($ch, CURLOPT_URL, $url);
         if (isset($parsedmethod)) $this->curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $parsedmethod);
         if (isset($data)) $this->curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        return CurlResponse::create($this->execCurl($ch));
+        return CurlInfos::create($this->execCurl($ch));
     }
 
     /**
@@ -435,15 +433,23 @@ class RequestBuilder {
         $filehandle = $this->opts[CURLOPT_FILE] ?? fopen("php://temp", "r+");
         if (!isset($this->opts[CURLOPT_FILE])) $this->curl_setopt($ch, CURLOPT_FILE, $filehandle);
 
+        $fullheader = "";
         $headers = [];
-        $this->curl_setopt($ch, CURLOPT_HEADERFUNCTION, function () use (&$headers) {
+        $status = 200;
+        $version = "1.1";
+        $this->curl_setopt($ch, CURLOPT_HEADERFUNCTION, function () use (&$fullheader, &$headers, &$status, &$version) {
             list(, $header) = func_get_args();
+            $fullheader .= $header;
             $len = strlen($header);
             $line = trim($header);
             if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                 list(, $name, $value) = $matches;
                 $headers[$name][] = $value;
-            } elseif (!empty($trimmed)) $headers["status"][] = $line;
+            } elseif (!empty($line) and preg_match('/^[A-Z]+\/([0-9](?:\.[0-9])?)\h+([0-9]{3})/i', $line, $matches)) {
+                list(, $version, $status) = $matches;
+                $status = intval($status);
+                $version = strlen($version) > 1 ? $version : "$version.0";
+            }
             return $len;
         });
 
@@ -456,13 +462,11 @@ class RequestBuilder {
             if ($errno !== CURLE_OPERATION_TIMEOUTED) break;
             --$try;
         } while ($try > 0);
-        $result = curl_getinfo($ch);
-
 
         // Parse Request Headers
         $rheaders = [];
-        if (isset($result["request_header"])) {
-            foreach (explode("\n", $result["request_header"]) as $line) {
+        if (($hout = curl_getinfo($ch, CURLINFO_HEADER_OUT))) {
+            foreach (explode("\n", $hout) as $line) {
                 $line = trim($line);
                 if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                     list(, $name, $value) = $matches;
@@ -471,16 +475,29 @@ class RequestBuilder {
             }
         }
 
-        $result = array_replace($result, [
+
+        $result = [
+            "url" => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
+            "status" => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
+            "statustext" => Curl::REASON_PHRASES[$status] ?? Curl::UNASSIGNED_REASON_PHRASE,
+            "version" => $version,
+            "content_type" => curl_getinfo($ch, CURLINFO_CONTENT_TYPE),
+            "redirect_count" => curl_getinfo($ch, CURLINFO_REDIRECT_COUNT),
+            "redirect_url" => curl_getinfo($ch, CURLINFO_REDIRECT_URL) ?: "",
+            "headers" => $headers,
+            "header_string" => $fullheader,
+            "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
+            "request_headers" => $rheaders,
+            //"http_reason_phrase" => $phrase,
             "curl_exec" => $success,
             "curl_error" => $err,
             "curl_errno" => $errno,
+            "curl_info" => (object) curl_getinfo($ch),
             "body" => $filehandle,
-            "headers" => [
-                "response" => $headers,
-                "request" => $rheaders
-            ]
-        ]);
+        ];
+
+        curl_close($ch);
+
         return $result;
     }
 
