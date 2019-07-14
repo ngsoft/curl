@@ -10,7 +10,7 @@ class CurlResponseException extends CurlException {
     const CODE_CURLERROR = 32;
     const CODE_INVALIDSTREAM = 64;
 
-    /** @var CURLInfos */
+    /** @var CurlResponse */
     private $response;
 
     public function __construct(
