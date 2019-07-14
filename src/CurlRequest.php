@@ -488,6 +488,9 @@ class CurlRequest {
 
         $result = [
             "curl_info" => (object) array_replace(curl_getinfo($ch), ["response_header" => $fullheader]),
+            "curl_exec" => $success,
+            "curl_error" => $err,
+            "curl_errno" => $errno,
             "url" => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
             "status" => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
             "statustext" => Curl::REASON_PHRASES[$status] ?? Curl::UNASSIGNED_REASON_PHRASE,
@@ -498,9 +501,6 @@ class CurlRequest {
             "headers" => $headers,
             "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
             "request_headers" => $rheaders,
-            "curl_exec" => $success,
-            "curl_error" => $err,
-            "curl_errno" => $errno,
             "body" => $filehandle,
         ];
 
