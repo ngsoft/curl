@@ -453,8 +453,7 @@ class CurlRequest {
             $matches = [];
             if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                 list(, $name, $value) = $matches;
-                $value = trim($value);
-                $headers[$name][] = $value;
+                $headers[$name][] = trim($value);
             } elseif (!empty($line) and preg_match('/[A-Z]+\/([0-9](?:\.[0-9])?)\h+([0-9]{3})/i', $line, $matches)) {
                 list(, $version, $status) = $matches;
                 $status = intval($status);
@@ -481,8 +480,8 @@ class CurlRequest {
                 $line = trim($line);
                 if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
                     list(, $name, $value) = $matches;
-                    $rheaders[$name][] = $value;
-                } elseif (!empty($line)) $rheaders["status"][] = $line;
+                    $rheaders[$name][] = trim($value);
+                }
             }
         }
 
