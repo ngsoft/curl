@@ -76,7 +76,7 @@ class RequestBuilder {
                     else @unlink($file);
                 } else return null;
             }
-            $path = realpath($file);
+            $path = realpath($file) ?: null;
         }
         return $path;
     }
@@ -286,6 +286,7 @@ class RequestBuilder {
      */
     public function withCookieFile(string $cookieFile) {
         $dirname = dirname($cookieFile);
+        file_exists($dirname)or @ mkdir($dirname, 0777, true);
         if (!is_dir($dirname) or ! is_writable($dirname)) {
             throw new InvalidArgumentException("$dirname for cookie file does not exists or is not writable.");
         }
@@ -328,8 +329,58 @@ class RequestBuilder {
 
     ////////////////////////////   FETCH   ////////////////////////////
 
-    public function fetch(string $url): CurlResponse {
+    public function fetch(string $url, string $method = null): CurlResponse {
 
+
+
+
+        return new CurlResponse();
+    }
+
+    /**
+     * Initialize CURL resource
+     * @return resource
+     */
+    private function initCurl() {
+        $ch = curl_init();
+
+        $headers = [CURLOPT_HTTPHEADER => $this->makeHeaders()];
+        $cookies = [];
+        if (!empty($this->cookie)) {
+            $cookies = [
+                CURLOPT_COOKIEFILE => $this->cookie,
+                CURLOPT_COOKIEJAR => $this->cookie
+            ];
+        }
+        $ca = [CURLOPT_SSL_VERIFYPEER => false];
+        if ($cert = $this->getCACert()) {
+            $ca = [
+                CURLOPT_CAINFO => $ca,
+                CURLOPT_SSL_VERIFYPEER => true
+            ];
+        }
+        $this->curl_setopt_array($ch, $headers);
+        $this->curl_setopt_array($ch, array_merge(self::CURL_DEFAULTS, $cookies, $ca, $this->opts));
+        return $ch;
+    }
+
+    /**
+     * Execute CURL Request
+     * @param type $ch
+     * @param string $url
+     * @return array<string,mixed>
+     */
+    private function execCurl($ch): array {
+
+        $headers = [];
+        $index = [];
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function () use (&$headers, &$index) {
+
+            print_r(func_get_args());
+        });
+
+
+        return [];
     }
 
 }
