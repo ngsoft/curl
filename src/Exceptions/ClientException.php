@@ -41,12 +41,4 @@ abstract class ClientException extends RuntimeException {
         return $this->request;
     }
 
-    /**
-     * Logs the error to the logger
-     * @param LoggerInterface|null $logger
-     */
-    public function logMessage(LoggerInterface $logger = null) {
-        if ($logger !== null) $logger->error($this->getMessage());
-    }
-
 }
