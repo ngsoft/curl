@@ -3,32 +3,12 @@
 namespace NGSOFT\Curl;
 
 use ArrayAccess,
-    Countable,
-    IteratorAggregate,
-    NGSOFT\Curl\Exceptions\CurlException,
-    RuntimeException;
-
-/*
- * Properties that exists but not needed
- * @property double $total_time
- * @property double $namelookup_time
- * @property double $connect_time
- * @property double $pretransfer_time
- * @property int $size_upload
- * @property int $size_download
- * @property int $speed_download
- * @property double $starttransfer_time
- * @property string $primary_ip
- * @property int $primary_port
- * @property string $local_ip
- * @property int $local_port
- * @property int $appconnect_time_us
- * @property int $connect_time_us
- * @property int $namelookup_time_us
- * @property int $pretransfer_time_us
- * @property int $starttransfer_time_us
- * @property int $total_time_us
- */
+    Countable;
+use NGSOFT\Curl\Exceptions\{
+    CurlException, CurlResponseException
+};
+use RuntimeException,
+    stdClass;
 
 /**
  * @property string $url Last effective URL
@@ -39,7 +19,6 @@ use ArrayAccess,
  * @property int $redirect_count Number of redirects
  * @property string $redirect_url Next url to redirect to
  * @property array<string,string[]> $headers Parsed Headers
- * @property string $header_string Non parsed headers
  * @property int $header_size Header Size
  * @property array<string,string[]> $request_headers Parsed Request headers
  * @property bool $curl_exec curl_exec() return value
@@ -49,7 +28,7 @@ use ArrayAccess,
  * @property resource $body File handle containing the contents
  * @property string $contents Getter to retrieve the contents
  */
-class CurlInfos implements ArrayAccess, Countable {
+class CurlResponse implements ArrayAccess, Countable {
 
     /** @var array<string,mixed> */
     private $storage = [];
@@ -63,30 +42,20 @@ class CurlInfos implements ArrayAccess, Countable {
         self::assertValidMetadatas($metadatas);
         $response = new static();
         $response->storage = $metadatas;
+        if ($response->curl_errno > 0) {
+            throw new CurlResponseException($response, $response->curl_error, CurlResponseException::CODE_CURLERROR);
+        }
         return $response;
     }
 
     private static function assertValidMetadatas(array $metadatas) {
         foreach ([
-    "url",
-    "status",
-    "statustext",
-    "version",
-    "content_type",
-    "redirect_count",
-    "redirect_url",
-    "headers",
-    "header_string",
-    "header_size",
-    "request_headers",
-    "curl_exec",
-    "curl_error",
-    "curl_errno",
-    "curl_info",
-    "body",
+    "url", "status", "statustext", "version", "content_type",
+    "redirect_count", "redirect_url", "headers", "header_size", "request_headers",
+    "curl_exec", "curl_error", "curl_errno", "curl_info", "body",
         ] as $key) {
             if (!array_key_exists($key, $metadatas)) {
-                throw new RuntimeException("Invalid Metadata Provided.");
+                throw new CurlResponseException($this, "Invalid Metadata Provided.", CurlResponseException::CODE_METADATA);
             }
         }
     }

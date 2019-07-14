@@ -2,19 +2,19 @@
 
 namespace NGSOFT\Curl\Exceptions;
 
-use NGSOFT\Curl\CurlInfos,
+use NGSOFT\Curl\CurlResponse,
     Throwable;
 
 class CurlResponseException extends CurlException {
 
-    const CODE_METADATA = 0;
-    const CODE_CURL_ERROR = 1;
+    const CODE_METADATA = 64;
+    const CODE_CURL_ERROR = 128;
 
     /** @var CURLInfos */
     private $response;
 
     public function __construct(
-            CurlInfos $response,
+            CurlResponse $response,
             string $message = "",
             int $code = 0,
             Throwable $previous = NULL
@@ -23,7 +23,7 @@ class CurlResponseException extends CurlException {
         parent::__construct($message, $code, $previous);
     }
 
-    public function getCurlResponse(): CurlInfos {
+    public function getCurlResponse(): CurlResponse {
         return $this->response;
     }
 

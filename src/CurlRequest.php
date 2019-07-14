@@ -10,7 +10,7 @@ use NGSOFT\Curl\{
 };
 use RuntimeException;
 
-class RequestBuilder {
+class CurlRequest {
 
     const CACERT_SRC = 'https://curl.haxx.se/ca/cacert.pem';
 
@@ -368,7 +368,7 @@ class RequestBuilder {
      * @param null|string|array<string,mixed> $data
      * @return CurlResponse
      */
-    public function fetch(string $url, string $method = null, $data = null): CurlInfos {
+    public function fetch(string $url, string $method = null, $data = null): CurlResponse {
         /**
          * Assertions
          */
@@ -391,7 +391,7 @@ class RequestBuilder {
         $this->curl_setopt($ch, CURLOPT_URL, $url);
         if (isset($parsedmethod)) $this->curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $parsedmethod);
         if (isset($data)) $this->curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        return CurlInfos::create($this->execCurl($ch));
+        return CurlResponse::create($this->execCurl($ch));
     }
 
     /**
@@ -477,6 +477,7 @@ class RequestBuilder {
 
 
         $result = [
+            "curl_info" => (object) array_replace(curl_getinfo($ch), ["response_header" => $fullheader]),
             "url" => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
             "status" => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
             "statustext" => Curl::REASON_PHRASES[$status] ?? Curl::UNASSIGNED_REASON_PHRASE,
@@ -485,14 +486,12 @@ class RequestBuilder {
             "redirect_count" => curl_getinfo($ch, CURLINFO_REDIRECT_COUNT),
             "redirect_url" => curl_getinfo($ch, CURLINFO_REDIRECT_URL) ?: "",
             "headers" => $headers,
-            "header_string" => $fullheader,
             "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
             "request_headers" => $rheaders,
             //"http_reason_phrase" => $phrase,
             "curl_exec" => $success,
             "curl_error" => $err,
             "curl_errno" => $errno,
-            "curl_info" => (object) curl_getinfo($ch),
             "body" => $filehandle,
         ];
 
