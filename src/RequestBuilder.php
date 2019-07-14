@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace NGSOFT\Curl;
 
-use InvalidArgumentException,
-    NGSOFT\Curl\Interfaces\CurlHelper,
-    UI\Exception\RuntimeException;
+use InvalidArgumentException;
+use NGSOFT\Curl\{
+    Exceptions\CurlException, Interfaces\Curl
+};
+use UI\Exception\RuntimeException;
 
 class RequestBuilder {
 
@@ -15,11 +17,10 @@ class RequestBuilder {
     /** Mozilla Firefox ESR 60 */
     const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0";
     const CURL_DEFAULTS = [
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_ENCODING => "gzip,deflate",
-        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "gzip,deflate", //some sites encoding gives an encoded body in the response
+        CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_AUTOREFERER => true,
-        CURLINFO_HEADER_OUT => true,
         /** @link https://curl.haxx.se/libcurl/c/CURLOPT_COOKIEFILE.html Enables cookie engine without using a file */
         CURLOPT_COOKIEFILE => "",
     ];
@@ -84,13 +85,33 @@ class RequestBuilder {
     }
 
     /**
+     * Proxy out curl_setopt
+     * @param resource $ch
+     * @param int $opt
+     * @param mixed $value
+     * @return void
+     * @throws CurlException
+     */
+    private function curl_setopt($ch, int $opt, $value): void {
+
+
+        if (curl_setopt($ch, $opt, $value) === false) {
+            throw new CurlException(
+                    "Invalid CURLOPT $opt",
+                    CurlException::CODE_INVALIDOPT
+            );
+        }
+    }
+
+    /**
      * Prevents a bug in Curl that prevents some properties from being written using curl_setopt_array
      * @param resource $ch
      * @param array $options
      */
     private function curl_setopt_array($ch, array $options) {
+
         foreach ($options as $k => $v) {
-            curl_setopt($ch, $k, $v);
+            $this->curl_setopt($ch, $k, $v);
         }
     }
 
@@ -100,7 +121,7 @@ class RequestBuilder {
      * @return bool
      */
     private function isValidUrl(string $url): bool {
-        return preg_match(CurlHelper::VALID_URL_REGEX, $url) > 0;
+        return preg_match(Curl::VALID_URL_REGEX, $url) > 0;
     }
 
     /**
@@ -329,6 +350,15 @@ class RequestBuilder {
         ]);
     }
 
+    /**
+     * Tells CURL if it should follow redirection (301,302)
+     * @param bool $redirect
+     * @return static
+     */
+    public function withAutoRedirect(bool $redirect = true) {
+        return $this->withOpt(CURLOPT_FOLLOWLOCATION, $redirect);
+    }
+
     ////////////////////////////   FETCH   ////////////////////////////
 
     /**
@@ -340,13 +370,30 @@ class RequestBuilder {
      */
     public function fetch(string $url, string $method = null, $data = null): CurlResponse {
 
+
+        /**
+         * Assertions
+         */
+        if (!$this->isValidUrl($url)) throw new CurlException("Invalid URL $url");
+        if ($method !== null and ( $parsedmethod = strtoupper($method)) and ! in_array($parsedmethod, Curl::VALID_METHODS)) {
+            throw new CurlException("Invalid Method $method");
+        }
+
+        if (is_array($data)) $data = http_build_query($data);
+        if (isset($data) and ! is_string($data)) {
+            throw new CurlException(
+                    "Invalid data supplied, string|array|NULL requested but "
+                    . gettype($data) . " given."
+            );
+        }
+        /**
+         * Build the request
+         */
         $ch = $this->initCurl();
-
-
-
-
-
-        return new CurlResponse();
+        $this->curl_setopt($ch, CURLOPT_URL, $url);
+        if (isset($parsedmethod)) $this->curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $parsedmethod);
+        if (isset($data)) $this->curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        return new CurlResponse($this->execCurl($ch));
     }
 
     /**
@@ -355,7 +402,6 @@ class RequestBuilder {
      */
     private function initCurl() {
         $ch = curl_init();
-
         $headers = [CURLOPT_HTTPHEADER => $this->makeHeaders()];
         $cookies = [];
         if (!empty($this->cookie)) {
@@ -372,7 +418,7 @@ class RequestBuilder {
             ];
         }
         $this->curl_setopt_array($ch, $headers);
-        $this->curl_setopt_array($ch, array_merge(self::CURL_DEFAULTS, $cookies, $ca, $this->opts));
+        $this->curl_setopt_array($ch, array_replace(self::CURL_DEFAULTS, $cookies, $ca, $this->opts));
         return $ch;
     }
 
@@ -384,15 +430,58 @@ class RequestBuilder {
      */
     private function execCurl($ch): array {
 
-        $headers = [];
-        $index = [];
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function () use (&$headers, &$index) {
+        $this->curl_setopt($ch, CURLINFO_HEADER_OUT, true); // to parse request headers
 
-            print_r(func_get_args());
+        $filehandle = $this->opts[CURLOPT_FILE] ?? fopen("php://temp", "r+");
+        if (!isset($this->opts[CURLOPT_FILE])) $this->curl_setopt($ch, CURLOPT_FILE, $filehandle);
+
+        $headers = [];
+        $this->curl_setopt($ch, CURLOPT_HEADERFUNCTION, function () use (&$headers) {
+            list(, $header) = func_get_args();
+            $len = strlen($header);
+            $line = trim($header);
+            if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
+                list(, $name, $value) = $matches;
+                $headers[$name][] = $value;
+            } elseif (!empty($trimmed)) $headers["status"][] = $line;
+            return $len;
         });
 
+        // Retry on timeout
+        $try = $this->retry + 1;
+        do {
+            $success = curl_exec($ch);
+            $err = curl_error($ch);
+            $errno = curl_errno($ch);
+            if ($errno !== CURLE_OPERATION_TIMEOUTED) break;
+            --$try;
+        } while ($try > 0);
+        $result = curl_getinfo($ch);
 
-        return [];
+
+        // Parse Request Headers
+        $rheaders = [];
+        if (isset($result["request_header"])) {
+            foreach (explode("\n", $result["request_header"]) as $line) {
+                $line = trim($line);
+                if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
+                    list(, $name, $value) = $matches;
+                    $rheaders[$name][] = $value;
+                } elseif (!empty($line)) $rheaders["status"][] = $line;
+            }
+        }
+
+        $result = array_replace($result, [
+            "curl_exec" => $success,
+            "curl_error" => $err,
+            "curl_errno" => $errno,
+            "body" => $filehandle,
+            "headers" => [
+                "response" => $headers,
+                "request" => $rheaders
+            ]
+        ]);
+        return $result;
     }
 
 }

@@ -8,6 +8,13 @@ use Psr\Log\LoggerInterface,
 class CurlException extends RuntimeException {
 
     /**
+     * Codes
+     */
+    const CODE_PARSINGREQUEST = 0;
+    const CODE_INVALIDOPT = 1;
+    const CODE_CURLERROR = 2;
+
+    /**
      * Logs the error to the logger
      * @param LoggerInterface|null $logger
      */

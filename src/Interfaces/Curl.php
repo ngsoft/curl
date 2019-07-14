@@ -4,7 +4,7 @@ namespace NGSOFT\Curl\Interfaces;
 
 use Fig\Http\Message\StatusCodeInterface;
 
-interface CurlHelper extends StatusCodeInterface {
+interface Curl extends StatusCodeInterface {
 
     /**
      * Adapted the regex for php unicode
