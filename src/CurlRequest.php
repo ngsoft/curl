@@ -52,6 +52,9 @@ class CurlRequest {
     /** @var string|null */
     private $cookie;
 
+    /** @var resource */
+    private $resource;
+
     ////////////////////////////   UTILS   ////////////////////////////
 
     /**
@@ -507,10 +510,11 @@ class CurlRequest {
 
 
         $result = [
-            "curl_info" => (object) array_replace(curl_getinfo($ch), ["response_header" => $fullheader]),
+            "curl_info" => null,
             "curl_exec" => $success,
             "curl_error" => $err,
             "curl_errno" => $errno,
+            "curl_resource" => $ch,
             "url" => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
             "status" => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
             "statustext" => Curl::REASON_PHRASES[$status] ?? Curl::UNASSIGNED_REASON_PHRASE,
@@ -522,10 +526,8 @@ class CurlRequest {
             "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
             "request_headers" => $rheaders,
             "body" => $filehandle,
-            "request" => $this
+            "request" => $this,
         ];
-
-        curl_close($ch);
 
         return $result;
     }

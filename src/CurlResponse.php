@@ -36,6 +36,13 @@ class CurlResponse implements ArrayAccess, Countable {
     /** @var array<string,mixed> */
     private $storage = [];
 
+    public function __destruct() {
+        if (
+                isset($this->storage["curl_resource"])
+                and gettype($this->storage["curl_resource"]) === "resource"
+        ) curl_close($this->storage["curl_resource"]);
+    }
+
     /**
      * Creates a new CurlResponse using the metadatas provided
      * @param array $metadatas
@@ -56,7 +63,7 @@ class CurlResponse implements ArrayAccess, Countable {
         foreach ([
     "url", "status", "statustext", "version", "content_type",
     "redirect_count", "redirect_url", "headers", "header_size", "request_headers",
-    "curl_exec", "curl_error", "curl_errno", "curl_info", "body", "request"
+    "curl_exec", "curl_error", "curl_errno", "curl_info", "curl_resource", "body", "request"
         ] as $key) {
             if (!array_key_exists($key, $this->storage)) {
                 throw new CurlException("Invalid Metadata Provided.", CurlException::CODE_METADATA);
@@ -175,7 +182,9 @@ class CurlResponse implements ArrayAccess, Countable {
      * @return stdClass
      */
     public function getCurlInfo(): \stdClass {
-        return $this->storage["curl_info"];
+        $info = &$this->storage["curl_info"];
+        if ($info === null) $info = (object) curl_getinfo($this->storage["curl_resource"]);
+        return $info;
     }
 
     /**
