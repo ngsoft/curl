@@ -55,6 +55,14 @@ class CurlRequest {
     ////////////////////////////   UTILS   ////////////////////////////
 
     /**
+     * Create a new instance
+     * @return static
+     */
+    public static function create(): self {
+        return new static();
+    }
+
+    /**
      * Set the Certifications download folder
      * @param string $certlocation
      * @throws InvalidArgumentException
