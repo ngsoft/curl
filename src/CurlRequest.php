@@ -15,7 +15,7 @@ class CurlRequest {
     /**
      * Current Version
      */
-    const VERSION = "1.0.2";
+    const VERSION = "1.0.3";
 
     /**
      * Certificats to Enable Secure HTTPS
