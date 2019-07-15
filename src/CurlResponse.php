@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace NGSOFT\Curl;
 
 use ArrayAccess,
-    Countable;
-use NGSOFT\Curl\Exceptions\{
-    CurlException, CurlResponseException
-};
-use RuntimeException,
+    Countable,
+    NGSOFT\Curl\Exceptions\CurlResponseException,
+    RuntimeException,
     stdClass;
 
 /**
@@ -31,7 +29,7 @@ use RuntimeException,
  * @property-read string $contents Getter to retrieve the contents
  * @property-read CurlRequest $request The Request
  */
-class CurlResponse implements ArrayAccess, Countable {
+final class CurlResponse implements ArrayAccess, Countable {
 
     /** @var array<string,mixed> */
     private $storage = [];
@@ -66,7 +64,7 @@ class CurlResponse implements ArrayAccess, Countable {
     "curl_exec", "curl_error", "curl_errno", "curl_info", "curl_resource", "body", "request"
         ] as $key) {
             if (!array_key_exists($key, $this->storage)) {
-                throw new CurlException("Invalid Metadata Provided.", CurlException::CODE_METADATA);
+                throw new \RuntimeException("Invalid Metadata Provided.");
             }
         }
     }
@@ -110,7 +108,7 @@ class CurlResponse implements ArrayAccess, Countable {
      * @return string
      */
     public function getContentType(): string {
-        return $this->storage["content_type"] ?: "";
+        return $this->storage["content_type"];
     }
 
     /**
@@ -183,7 +181,10 @@ class CurlResponse implements ArrayAccess, Countable {
      */
     public function getCurlInfo(): \stdClass {
         $info = &$this->storage["curl_info"];
-        if ($info === null) $info = (object) curl_getinfo($this->storage["curl_resource"]);
+        if ($info === null) {
+            $info = (object) curl_getinfo($this->storage["curl_resource"]);
+            curl_close($this->storage["curl_resource"]);
+        }
         return $info;
     }
 
@@ -268,7 +269,7 @@ class CurlResponse implements ArrayAccess, Countable {
     public function __toString() {
         try {
             return $this->getContents();
-        } catch (CurlException $exc) {
+        } catch (CurlResponseException $exc) {
             $exc->getCode();
             return "";
         }
@@ -293,7 +294,7 @@ class CurlResponse implements ArrayAccess, Countable {
 
     /** {@inheritdoc} */
     public function offsetUnset($offset) {
-        $this->__unset($offset);
+        throw new RuntimeException("Cannot Unset " . __CLASS__ . "[" . $offset . "]");
     }
 
     /** {@inheritdoc} */

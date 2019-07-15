@@ -9,6 +9,9 @@ use NGSOFT\Curl\CurlResponse,
 
 class CurlResponseException extends CurlException {
 
+    const CODE_PARSINGREQUEST = 0;
+    const CODE_INVALIDOPT = 8;
+    const CODE_METADATA = 16;
     const CODE_CURLERROR = 32;
     const CODE_INVALIDSTREAM = 64;
 

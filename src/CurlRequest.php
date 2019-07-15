@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace NGSOFT\Curl;
 
-use InvalidArgumentException;
-use NGSOFT\Curl\{
-    Exceptions\CurlException, Interfaces\Curl
-};
-use RuntimeException;
+use InvalidArgumentException,
+    NGSOFT\Curl\Interfaces\Curl,
+    RuntimeException;
 
 class CurlRequest {
 
@@ -51,9 +49,6 @@ class CurlRequest {
 
     /** @var string|null */
     private $cookie;
-
-    /** @var resource */
-    private $resource;
 
     ////////////////////////////   UTILS   ////////////////////////////
 
@@ -113,15 +108,12 @@ class CurlRequest {
      * @param int $opt
      * @param mixed $value
      * @return void
-     * @throws CurlException
+     * @throws InvalidArgumentException
      */
     private function curl_setopt($ch, int $opt, $value): void {
-
-
         if (curl_setopt($ch, $opt, $value) === false) {
-            throw new CurlException(
-                    "Invalid CURLOPT $opt",
-                    CurlException::CODE_INVALIDOPT
+            throw new InvalidArgumentException(
+                    "Invalid CURLOPT $opt"
             );
         }
     }
@@ -159,6 +151,24 @@ class CurlRequest {
             }
         }
         return $lines;
+    }
+
+    /**
+     * Convert text header to valid array header
+     * @param string $header
+     * @return array<string,string[]>
+     */
+    private function parseHeaderText(string $header): array {
+        $lines = explode("\n", $header);
+        $headers = [];
+        $matches = [];
+        foreach ($lines as $line) {
+            if (!empty($line) and preg_match('/(?:(\S+):\s(.*))/', $line, $matches) > 0) {
+                list(, $name, $value) = $matches;
+                $headers[$name][] = trim($value);
+            }
+        }
+        return $headers;
     }
 
     /** @return static */
@@ -257,6 +267,24 @@ class CurlRequest {
         return $this->getClone()->setHeader($name, $value);
     }
 
+    /**
+     * Adds multiple headers to the stack
+     * @param string $header
+     * @return static
+     */
+    public function withAddedHeaderText(string $header): self {
+        return $this->withAddedHeaders($this->parseHeaderText($header));
+    }
+
+    /**
+     * Set multiple headers (overwrites the headers)
+     * @param string $header
+     * @return static
+     */
+    public function withHeaderText(string $header): self {
+        return $this->withHeaders($this->parseHeaderText($header));
+    }
+
     ////////////////////////////   ADVANCED BUILDER   ////////////////////////////
 
     /**
@@ -336,13 +364,13 @@ class CurlRequest {
      * Set a cookie location for that request
      * @param string $cookieFile File where will be stored the cookies
      * @return static
-     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function withCookieFile(string $cookieFile) {
         $dirname = dirname($cookieFile);
         file_exists($dirname)or @ mkdir($dirname, 0777, true);
         if (!is_dir($dirname) or ! is_writable($dirname)) {
-            throw new InvalidArgumentException("$dirname for cookie file does not exists or is not writable.");
+            throw new RuntimeException("$dirname for cookie file does not exists or is not writable.");
         }
         $clone = $this->getClone();
         $clone->cookie = $cookieFile;
@@ -390,27 +418,73 @@ class CurlRequest {
         return $this->withOpt(CURLOPT_FOLLOWLOCATION, $redirect);
     }
 
+    /**
+     * Set the request method
+     * @param string $method
+     * @return static
+     * @throws InvalidArgumentException
+     */
+    public function withMethod(string $method) {
+        $method = strtoupper($method);
+        if (!in_array($method, Curl::VALID_METHODS)) throw new InvalidArgumentException("Invalid method $method");
+        return $this->withOpt(CURLOPT_CUSTOMREQUEST, $method);
+    }
+
+    /**
+     * Set the URL
+     * @param string $url
+     * @return static
+     * @throws InvalidArgumentException
+     * @return static
+     */
+    public function withUrl(string $url) {
+        if (!$this->isValidUrl($url)) throw new InvalidArgumentException("Invalid URL $url");
+        return $this->withOpt(CURLOPT_URL, $url);
+    }
+
+    /**
+     * Add Data to post
+     * @param null|string|array<string,mixed> $data
+     * @throws InvalidArgumentException
+     * @return static
+     */
+    public function withData($data) {
+        if (is_array($data)) $data = http_build_query($data);
+        if (!is_string($data)) {
+            throw new InvalidArgumentException(
+                    "Invalid data supplied, string|array requested but "
+                    . gettype($data) . " given."
+            );
+        }
+        return $this->withOpt(CURLOPT_POSTFIELDS, $data);
+    }
+
     ////////////////////////////   FETCH   ////////////////////////////
 
     /**
      * Execute the CURL Request
-     * @param string $url
+     * @param string|null $url
      * @param string|null $method GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH
      * @param null|string|array<string,mixed> $data
+     * @throws InvalidArgumentException
      * @return CurlResponse
      */
-    public function fetch(string $url, string $method = null, $data = null): CurlResponse {
+    public function fetch(string $url = null, string $method = null, $data = null): CurlResponse {
         /**
          * Assertions
          */
-        if (!$this->isValidUrl($url)) throw new CurlException("Invalid URL $url");
+        if ($url === null) {
+            if (!isset($this->opts[CURLOPT_URL])) throw new InvalidArgumentException("No Url Defined.");
+            $url = $this->opts[CURLOPT_URL];
+        }
+        if (!$this->isValidUrl($url)) throw new InvalidArgumentException("Invalid URL $url");
         if ($method !== null and ( $parsedmethod = strtoupper($method)) and ! in_array($parsedmethod, Curl::VALID_METHODS)) {
-            throw new CurlException("Invalid Method $method");
+            throw new InvalidArgumentException("Invalid Method $method");
         }
 
         if (is_array($data)) $data = http_build_query($data);
         if (isset($data) and ! is_string($data)) {
-            throw new CurlException(
+            throw new InvalidArgumentException(
                     "Invalid data supplied, string|array|NULL requested but "
                     . gettype($data) . " given."
             );
@@ -519,7 +593,7 @@ class CurlRequest {
             "status" => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
             "statustext" => Curl::REASON_PHRASES[$status] ?? Curl::UNASSIGNED_REASON_PHRASE,
             "version" => $version,
-            "content_type" => curl_getinfo($ch, CURLINFO_CONTENT_TYPE),
+            "content_type" => curl_getinfo($ch, CURLINFO_CONTENT_TYPE) ?: "",
             "redirect_count" => curl_getinfo($ch, CURLINFO_REDIRECT_COUNT),
             "redirect_url" => curl_getinfo($ch, CURLINFO_REDIRECT_URL) ?: "",
             "headers" => $headers,
