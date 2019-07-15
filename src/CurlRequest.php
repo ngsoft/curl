@@ -15,7 +15,7 @@ class CurlRequest {
     /**
      * Current Version
      */
-    const VERSION = "1.0.3";
+    const VERSION = "1.1";
 
     /**
      * Certificats to Enable Secure HTTPS
@@ -419,7 +419,7 @@ class CurlRequest {
         $this->curl_setopt($ch, CURLOPT_URL, $url);
         if (isset($parsedmethod)) $this->curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $parsedmethod);
         if (isset($data)) $this->curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        return CurlResponse::create($this->execCurl($ch));
+        return CurlResponse::from($this->execCurl($ch));
     }
 
     /**
@@ -522,6 +522,7 @@ class CurlRequest {
             "header_size" => curl_getinfo($ch, CURLINFO_HEADER_SIZE),
             "request_headers" => $rheaders,
             "body" => $filehandle,
+            "request" => $this
         ];
 
         curl_close($ch);
