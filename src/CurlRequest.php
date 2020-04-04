@@ -13,15 +13,15 @@ class CurlRequest {
     /**
      * Current Version
      */
-    const VERSION = "1.1";
+    const VERSION = "1.2";
 
     /**
      * Certificats to Enable Secure HTTPS
      */
     const CACERT_SRC = 'https://curl.haxx.se/ca/cacert.pem';
 
-    /** Mozilla Firefox ESR 60 */
-    const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0";
+    /** Mozilla Firefox ESR */
+    const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0";
 
     /**
      * Curl Defaults to be extended By User params
