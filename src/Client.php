@@ -11,11 +11,6 @@ use Psr\Http\{
     Client\ClientInterface, Message\RequestInterface, Message\ResponseFactoryInterface, Message\ResponseInterface,
     Message\StreamFactoryInterface
 };
-use RuntimeException;
-
-if (!interface_exists(ResponseFactoryInterface::class)) {
-    throw new RuntimeException("Cannot use the HTTP Client, you do not provide a PSR-17 implementation. see https://packagist.org/providers/psr/http-factory-implementation");
-}
 
 /**
  * PSR 18 Curl Client
