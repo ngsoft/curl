@@ -13,7 +13,7 @@ class CurlRequest {
     /**
      * Current Version
      */
-    const VERSION = "1.2";
+    const VERSION = "1.2.1";
 
     /**
      * Certificats to Enable Secure HTTPS
@@ -67,7 +67,7 @@ class CurlRequest {
      */
     public static function setCertlocation(string $certlocation) {
         file_exists($certlocation) || @mkdir($certlocation, 0777, true);
-        if (!is_dir($certlocation) or ! is_writable($certlocation)) {
+        if (!is_dir($certlocation) or!is_writable($certlocation)) {
             throw new RuntimeException("$certlocation is not an existing directory or is not writable.");
         }
         self::$cacertLocation = $certlocation . DIRECTORY_SEPARATOR . basename(self::CACERT_SRC);
@@ -92,7 +92,7 @@ class CurlRequest {
                 $contents = curl_exec($ch);
                 $err = curl_errno($ch);
                 curl_close($ch);
-                if (!$err and ! empty($contents)) {
+                if (!$err and!empty($contents)) {
                     if (@file_put_contents($file, $contents, LOCK_EX)) @chmod($file, 0777);
                     else @unlink($file);
                 } else return null;
@@ -369,7 +369,7 @@ class CurlRequest {
     public function withCookieFile(string $cookieFile) {
         $dirname = dirname($cookieFile);
         file_exists($dirname)or @ mkdir($dirname, 0777, true);
-        if (!is_dir($dirname) or ! is_writable($dirname)) {
+        if (!is_dir($dirname) or!is_writable($dirname)) {
             throw new RuntimeException("$dirname for cookie file does not exists or is not writable.");
         }
         $clone = $this->getClone();
@@ -478,12 +478,12 @@ class CurlRequest {
             $url = $this->opts[CURLOPT_URL];
         }
         if (!$this->isValidUrl($url)) throw new InvalidArgumentException("Invalid URL $url");
-        if ($method !== null and ( $parsedmethod = strtoupper($method)) and ! in_array($parsedmethod, Curl::VALID_METHODS)) {
+        if ($method !== null and ( $parsedmethod = strtoupper($method)) and!in_array($parsedmethod, Curl::VALID_METHODS)) {
             throw new InvalidArgumentException("Invalid Method $method");
         }
 
         if (is_array($data)) $data = http_build_query($data);
-        if (isset($data) and ! is_string($data)) {
+        if (isset($data) and!is_string($data)) {
             throw new InvalidArgumentException(
                     "Invalid data supplied, string|array|NULL requested but "
                     . gettype($data) . " given."
