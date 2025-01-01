@@ -1,0 +1,9 @@
+vendor
+composer.lock
+package-lock.json
+.idea
+.vscode
+var
+dist
+tmp
+*.log
