@@ -4,6 +4,37 @@
 class CurlHandler
 {
 
+    /**
+     * Experimental technology to fetch long list of urls faster
+     * Only supports GET method with no header parsing
+     *
+     * @param string[]|Stringable[] $urls
+     * @return HttpClient\CurlResponse[] returns responses in order of urls
+     */
+    public static function makeMultiGetRequests(array $urls)
+    {
+        $multi = new HttpClient\CurlMultiRequest();
+        $cookies = tempnam(sys_get_temp_dir(), 'curl_multi');
+        foreach ($urls as $url) {
+
+            $req = (new HttpClient\CurlRequest());
+            $multi->add(
+                $req
+                    // prevent multi handler to follow using synchronous request
+                    ->setOpt(CURLOPT_FOLLOWLOCATION, true)
+                    // as headers cannot be defined in that function
+                    // make believe we are in the last firefox version
+                    ->setUserAgent(self::generateUserAgent())
+                    // cookie support if needed
+                    ->setCookieFile($cookies)
+                    ->prepare(self::METHOD_GET, $url)
+            );
+        }
+
+        // make request
+        return $multi->execute()->getResults();
+    }
+
 
     /**
      * @param string|Stringable $url
@@ -260,30 +291,30 @@ class CurlHandler
     ];
 
 
-    const REQUEST_GET = "GET";
-    const REQUEST_HEAD = "HEAD";
-    const REQUEST_POST = "POST";
-    const REQUEST_PUT = "PUT";
-    const REQUEST_DELETE = "DELETE";
-    const REQUEST_CONNECT = "CONNECT";
-    const REQUEST_OPTIONS = "OPTIONS";
-    const REQUEST_TRACE = "TRACE";
-    const REQUEST_PATCH = "PATCH";
+    const METHOD_GET = "GET";
+    const METHOD_HEAD = "HEAD";
+    const METHOD_POST = "POST";
+    const METHOD_PUT = "PUT";
+    const METHOD_DELETE = "DELETE";
+    const METHOD_CONNECT = "CONNECT";
+    const METHOD_OPTIONS = "OPTIONS";
+    const METHOD_TRACE = "TRACE";
+    const METHOD_PATCH = "PATCH";
 
 
     /**
      * Valid Methods
      */
     protected static $VALID_METHODS = [
-        self::REQUEST_GET,
-        self::REQUEST_HEAD,
-        self::REQUEST_POST,
-        self::REQUEST_PUT,
-        self::REQUEST_DELETE,
-        self::REQUEST_CONNECT,
-        self::REQUEST_OPTIONS,
-        self::REQUEST_TRACE,
-        self::REQUEST_PATCH,
+        self::METHOD_GET,
+        self::METHOD_HEAD,
+        self::METHOD_POST,
+        self::METHOD_PUT,
+        self::METHOD_DELETE,
+        self::METHOD_CONNECT,
+        self::METHOD_OPTIONS,
+        self::METHOD_TRACE,
+        self::METHOD_PATCH,
     ];
 
 }

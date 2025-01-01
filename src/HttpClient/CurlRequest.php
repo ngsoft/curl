@@ -99,6 +99,7 @@ class CurlRequest
         $url = (string)$url;
         $method = (string)$method;
 
+        $this->previous = null;
         $this->responseHeaders = [];
         $this->rawHeaders = "";
         $this->initialCount = $this->requestCount;
@@ -169,8 +170,7 @@ class CurlRequest
      */
     public function getResult()
     {
-
-        $prev = &$this->previous;
+        
         $ch = $this->getHandle();
         $info = curl_getinfo($ch);
         $statusCode = intval($info['http_code']);
@@ -183,13 +183,18 @@ class CurlRequest
         ];
 
 
+        $redirections = ($this->requestCount - $this->initialCount) - 1;
+        if (!empty($info["redirect_count"])) {
+            $redirections = $info["redirect_count"];
+        }
+
         $resp = CurlResponse::make([
             "success" => $success,
             "info" => $info,
             "stream" => $this->file,
             "headers" => $this->responseHeaders,
-            "previous" => $prev,
-            "redirections" => ($this->requestCount - $this->initialCount) - 1
+            "previous" => $this->previous,
+            "redirections" => $redirections
         ]);
 
         // prevent infinite loop in execute on multi redirects
@@ -197,7 +202,7 @@ class CurlRequest
 
         // auto redirect (301,302)
         if (!empty($info["redirect_url"])) {
-            $prev = $resp;
+            $this->previous = $resp;
             // reset data for new request
             $this->rawHeaders = "";
             $this->responseHeaders = [];
@@ -215,7 +220,7 @@ class CurlRequest
     public function execute()
     {
         if ($this->ready) {
-            $this->previous = null;
+
 
             $ch = $this->getHandle();
             while (1) {
